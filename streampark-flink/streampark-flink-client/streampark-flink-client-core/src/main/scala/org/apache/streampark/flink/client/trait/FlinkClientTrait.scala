@@ -249,7 +249,12 @@ trait FlinkClientTrait extends Logger {
         .safeSet(PythonOptions.PYTHON_EXECUTABLE, ConfigConst.PYTHON_EXECUTABLE)
     }
 
-    val packageProgram = PackagedProgram.newBuilder
+    val programBuilder = PackagedProgram.newBuilder
+    // jar File
+    if (submitRequest.developmentMode != DevelopmentMode.PYFLINK) {
+      programBuilder.setJarFile(submitRequest.userJarFile)
+    }
+    programBuilder
       .setArguments(
         flinkConfig
           .getOptional(ApplicationConfiguration.APPLICATION_ARGS)
@@ -258,8 +263,8 @@ trait FlinkClientTrait extends Logger {
         flinkConfig.getOptional(ApplicationConfiguration.APPLICATION_MAIN_CLASS).get()
       )
       .setSavepointRestoreSettings(submitRequest.savepointRestoreSettings)
-      .build()
 
+    val packageProgram = programBuilder.build()
     val jobGraph = PackagedProgramUtils.createJobGraph(
       packageProgram,
       flinkConfig,
@@ -506,13 +511,14 @@ trait FlinkClientTrait extends Logger {
       }
     }
 
-    if (
-      submitRequest.developmentMode == DevelopmentMode.PYFLINK && !submitRequest.executionMode
-        .equals(ExecutionMode.YARN_APPLICATION)
-    ) {
-      // python file
-      programArgs.add("-py")
-      programArgs.add(submitRequest.userJarFile.getAbsolutePath)
+    if (submitRequest.developmentMode == DevelopmentMode.PYFLINK) {
+      if (submitRequest.executionMode != ExecutionMode.YARN_APPLICATION) {
+        // python file
+        programArgs.add("-py")
+        programArgs.add(submitRequest.userJarFile.getAbsolutePath)
+      }
+      programArgs.add("-pym")
+      programArgs.add(submitRequest.userJarFile.getName.dropRight(ConfigConst.PYTHON_SUFFIX.length))
     }
     programArgs.toList.asJava
   }

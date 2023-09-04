@@ -115,13 +115,6 @@ object YarnApplicationClient extends YarnClientTrait {
         .safeSet(PythonOptions.PYTHON_CLIENT_EXECUTABLE, ConfigConst.PYTHON_EXECUTABLE)
         // python.executable
         .safeSet(PythonOptions.PYTHON_EXECUTABLE, ConfigConst.PYTHON_EXECUTABLE)
-
-      val args: util.List[String] = flinkConfig.get(ApplicationConfiguration.APPLICATION_ARGS)
-      // Caused by: java.lang.UnsupportedOperationException
-      val argsList: util.ArrayList[String] = new util.ArrayList[String](args)
-      argsList.add("-pym")
-      argsList.add(submitRequest.userJarFile.getName.dropRight(ConfigConst.PYTHON_SUFFIX.length))
-      flinkConfig.safeSet(ApplicationConfiguration.APPLICATION_ARGS, argsList)
     }
 
     logInfo(s"""
