@@ -18,27 +18,38 @@
 version: "3.8"
 
 services:
-#  streampark:
-#    image: apache/streampark:ci-basic
-#    command: bash bin/streampark.sh start_docker
-#    build:
-#      context: ./
-#      dockerfile: ./Dockerfile
-#    ports:
-#      - 10000:10000
-#      - 10030:10030
-#    environment:
-#      - SPRING_PROFILES_ACTIVE=h2
-#      - TZ=Asia/Shanghai
-#    privileged: true
-#    restart: unless-stopped
-#    networks:
-#      - e2e
-#    healthcheck:
-#      test: [ "CMD", "curl", "http://localhost:10000" ]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 120
+  streampark:
+    image: apache/streampark-flink-1.18.1-on-k8s:ci
+    hostname: streampark
+    command:
+      - sh
+      - -c
+      - /streampark/bin/streampark.sh start_docker
+    networks:
+      - e2e
+    build:
+      context: ./
+    ports:
+      - "20000:10000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SPRING_PROFILES_ACTIVE=h2
+      - TZ=Asia/Shanghai
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200m"
+        max-file: "1"
+    tty: true
+    stdin_open: true
+    restart: always
+    privileged: true
+    healthcheck:
+      test: [ "CMD", "curl", "http://streampark:10000" ]
+      interval: 5s
+      timeout: 5s
+      retries: 120
   registry:
     container_name: registry
     image: registry:2.8.3
